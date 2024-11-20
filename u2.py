@@ -2,6 +2,7 @@ import random
 import time
 
 import numpy as np
+from numpy.random import shuffle
 
 import Data_Loader, Models, losses
 import os, torch, torchvision, glob, natsort
@@ -25,27 +26,21 @@ if __name__ == '__main__':
     ###############################################
     # 参数
     ###############################################
-    epochs = 100
+    epochs = 300
     batch_size = 4
     lr = 0.001
     ce_weight = 0.5
-    val_split = int(0.25 * len(Training_Data))
-    num_workers = 0
-    train_mode = True
-
     ###############################################
     # validation dataset sample & train dataset sample
     ###############################################
+    val_split = int(0.25 * len(Training_Data))
     data_idx = list(range(len(Training_Data)))
     valid_idx, train_idx = data_idx[:val_split], data_idx[val_split:]
-    random.shuffle(train_idx)
     valid_sampler = data.sampler.SubsetRandomSampler(valid_idx)
     train_sampler = data.sampler.SubsetRandomSampler(train_idx)
 
-    train_loader = data.DataLoader(Training_Data, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                                   sampler=train_sampler)
-    valid_loader = data.DataLoader(Training_Data, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                                   sampler=valid_sampler)
+    train_loader = data.DataLoader(Training_Data,batch_size=batch_size, pin_memory=True, sampler=train_sampler)
+    valid_loader = data.DataLoader(Training_Data, batch_size=batch_size, pin_memory=True, sampler=valid_sampler)
 
     ###############################################
     # 模型
@@ -53,7 +48,7 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = Models.UNet(3,3)
     model.to(device)
-    opt = Adam(model.parameters(), lr=lr, betas=(0.9, 0.999))
+    opt = Adam(model.parameters(), lr=lr)#, weight_decay=1e-4)
     loss = losses.calc_loss
     scheduler = CosineAnnealingLR(opt, int(epochs * 1.5), eta_min=1e-5)
     #scheduler = ReduceLROnPlateau(opt, 'max', patience=5)
@@ -65,9 +60,8 @@ if __name__ == '__main__':
     New_folder = './model'
     read_model_path = './model/Unet_D_' + str(epochs) + '_' + str(batch_size)
 
-    if train_mode:
-        create_dir1(New_folder)
-        create_dir(read_model_path)
+    create_dir1(New_folder)
+    create_dir(read_model_path)
 
     ###############################################
     # 模型训练+验证
@@ -79,11 +73,8 @@ if __name__ == '__main__':
     val_loss_history = []  # 记录验证损失
 
     for epoch in range(epochs):
-        if not train_mode:
-            break
         since = time.time()
         acc.reset()
-
         model.train()
         for x, y in train_loader:
             x, y = x.to(device), y.to(device)
@@ -127,8 +118,8 @@ if __name__ == '__main__':
     # 绘制验证损失图
     ###############################################
     plt.figure(figsize=(10, 6))
-    plt.plot(range(1, epochs + 1), val_loss_history, label='Validation Loss', color='blue', marker='o')
-    plt.plot(range(1, epochs + 1), train_loss_history, label='Training Loss', color='red', marker='x')
+    plt.plot(range(1, epochs + 1), val_loss_history, label='Validation Loss', color='blue', marker='.')
+    plt.plot(range(1, epochs + 1), train_loss_history, label='Training Loss', color='red', marker='.')
     plt.title('Validation Loss & Training Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')

@@ -32,7 +32,7 @@ class Images_Dataset_folder(torch.utils.data.Dataset):
             self.tx = self.transformI
         else:
             self.tx = torchvision.transforms.Compose([
-                torchvision.transforms.RandomRotation(10),
+                #torchvision.transforms.RandomRotation(10),
                 torchvision.transforms.RandomHorizontalFlip(p=0.5),  # 随机水平翻转
                 torchvision.transforms.RandomVerticalFlip(p=0.5),
                 torchvision.transforms.ToTensor()
@@ -42,7 +42,7 @@ class Images_Dataset_folder(torch.utils.data.Dataset):
             self.lx = self.transformM
         else:
             self.lx = torchvision.transforms.Compose([
-                torchvision.transforms.RandomRotation(10),
+                #torchvision.transforms.RandomRotation(10),
                 torchvision.transforms.RandomHorizontalFlip(p=0.5),  # 随机水平翻转
                 torchvision.transforms.RandomVerticalFlip(p=0.5),
                 torchvision.transforms.Grayscale(),

@@ -17,11 +17,11 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dropout_p):
         super(ConvBlock, self).__init__()
         self.conv_conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=2),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(),
             nn.Dropout(dropout_p),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=5, padding=2),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU()
         )
@@ -146,7 +146,7 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
 
         params = {'in_chns': in_chns,
-                  'feature_chns': [6, 12, 24, 48, 96],
+                  'feature_chns': [4, 8, 16, 32, 68],
                   'dropout': [0.05, 0.1, 0.2, 0.3, 0.5],#[0.05, 0.1, 0.2, 0.3 ,0.5]
                   'class_num': class_num,
                   'bilinear': False,

@@ -7,8 +7,8 @@ import torch.nn.functional as F
 
 def dice_loss(input, target):
      smooth = 1e-5
-     intersect = (input*target).sum(dim=(0, 2, 3))
-     union = input.sum(dim=(0,2,3)) + target.sum(dim=(0,2,3))
+     intersect = (input*target).sum(dim=(2, 3))
+     union = input.sum(dim=(2,3)) + target.sum(dim=(2,3))
      return (1 - (intersect + smooth) / (union + smooth)).mean()
 
 

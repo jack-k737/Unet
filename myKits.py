@@ -24,6 +24,7 @@ def create_dir1(*dir_paths):
     for dir_path in dir_paths:
         if os.path.exists(dir_path) and os.path.isdir(dir_path):
             print('Path: ' + dir_path + ' folder is already existed')
+            return
         try:
             os.mkdir(dir_path)
         except OSError:
@@ -42,11 +43,6 @@ def create_dir(*dir_paths):
             print("Creation of the directory '%s' failed" % dir_path)
         else:
             print("Successfully created the directory '%s' " % dir_path)
-
-
-def image_mask(image, value):
-    mask = torch.ones_like(image) * value
-    return torch.isclose(image, mask, rtol=0.1).float()
 
 def label_pil2gray(image):
     image = torchvision.transforms.ToTensor()(image)
