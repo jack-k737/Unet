@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-The implementation is borrowed from: https://github.com/HiLab-git/PyMIC
-"""
-from __future__ import division, print_function
-from re import X
 
-import numpy as np
+from __future__ import division, print_function
 import torch
 import torch.nn as nn
-from torch.distributions.uniform import Uniform
 
 
 class ConvBlock(nn.Module):
@@ -17,7 +11,7 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dropout_p):
         super(ConvBlock, self).__init__()
         self.conv_conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=2),
+            nn.Conv2d(in_channels, out_channels, kernel_size=5 , padding=2),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(),
             nn.Dropout(dropout_p),
@@ -38,7 +32,6 @@ class DownBlock(nn.Module):
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
             ConvBlock(in_channels, out_channels, dropout_p)
-
         )
 
     def forward(self, x):
@@ -133,7 +126,7 @@ class Decoder(nn.Module):
         x_3 = self.up3(x_2, x1)
         x_4 = self.up4(x_3, x0)
         output = self.out_conv(x_4)
-        return output
+        return output, x_4
 
 
 def Dropout(x, p=0.5):
@@ -146,8 +139,8 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
 
         params = {'in_chns': in_chns,
-                  'feature_chns': [4, 8, 16, 32, 68],
-                  'dropout': [0.05, 0.1, 0.2, 0.3, 0.5],#[0.05, 0.1, 0.2, 0.3 ,0.5]
+                  'feature_chns': [4, 8, 16, 32, 64],
+                  'dropout': [0.05, 0.1, 0.2, 0.2, 0.5],#[0.05, 0.1, 0.2, 0.3 ,0.5]
                   'class_num': class_num,
                   'bilinear': False,
                   'acti_func': 'relu'}
@@ -157,6 +150,6 @@ class UNet(nn.Module):
 
     def forward(self, x):
         feature = self.encoder(x)
-        output = self.decoder(feature)
-        return output
+        output, x_4 = self.decoder(feature)
+        return output, x_4
 

@@ -1,9 +1,14 @@
-import optuna
+import PIL.Image as Image
+from myKits import label_pil2gray
+import torch.nn.functional as F
+import torch
 
-def objective(trial):
-    x = trial.suggest_float("x", -10, 10)
-    return (x -2) ** 2
+if __name__ == '__main__':
 
-study = optuna.create_study()
-study.optimize(objective, n_trials=100)
-print(study.best_params)
+    test_image = 'gdrishtiGS_002.png'
+    img = Image.open('ODOC/Domain1/train/mask/' + test_image)
+    img1 = label_pil2gray(img)
+    img2 = torch.round(img1*3).long()
+    img3 = F.one_hot(img2, num_classes=3)
+    img4 = img3.permute(0, 3, 1, 2)
+    print(img.shape)

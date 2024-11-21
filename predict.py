@@ -18,15 +18,13 @@ model = UNet(3, 3).to(device)
 model.load_state_dict(torch.load(read_model_path[0], weights_only=True))
 
 
-trans = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),
-                                        torchvision.transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                                                                         std=[0.5, 0.5, 0.5])])
+trans = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
 
 
 for image_dir in Test_images:
     image = Image.open(image_dir)
     image = trans(image).unsqueeze(0).to(device)
-    predict_image = model(image)
+    predict_image, _ = model(image)
     predict_image = torch.argmax(predict_image, dim=1).cpu()
     predict_image = predict_image / 3.
     save_path = image_predict_path + '/' + os.path.basename(image_dir)

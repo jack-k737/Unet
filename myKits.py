@@ -55,6 +55,9 @@ def label_save_gray(image, path):
     image_pil.save(path)
 
 
+def get_bg_features(labels):
+    pass
+
 
 if __name__ == '__main__':
     img = Image.open('ODOC/Domain1/train/imgs/gdrishtiGS_002.png')
