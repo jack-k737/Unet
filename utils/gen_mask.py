@@ -2,7 +2,7 @@ import PIL.Image as Image
 import torch
 import torch.nn as nn
 
-from myKits import label_save_gray, label_pil2gray,create_dir
+from utils.myKits import label_save_gray, label_pil2gray,create_dir
 import os
 
 mask_path = 'ODOC/Domain1/train/mask/'
@@ -38,6 +38,7 @@ if __name__ == '__main__':
         mask = label_pil2gray(mask)
         #利用
         edge_mask = edgeDetection()(mask)
+        edge_mask = edgeDetection()(edge_mask)
         label_save_gray(edge_mask, edMask_path + mask_name)
 
         background_mask = edgeDetection()(edge_mask)

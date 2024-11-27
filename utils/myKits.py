@@ -1,7 +1,6 @@
 import os,shutil
 import torch, torchvision
 import PIL.Image as Image
-from torch.sparse import softmax
 
 
 class Accumulator:

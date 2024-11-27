@@ -1,19 +1,19 @@
-import random
 import time
 
-from pytorch_metric_learning import losses
+#from pytorch_metric_learning import losses
 
 import numpy as np
-from numpy.random import shuffle
 
-import Data_Loader, Models, losses
+import utils.Data_Loader as Data_Loader
+import utils.Models as Models
+import utils.losses as losses
 import os, torch, torchvision, glob, natsort
 import torch.utils.data as data
 from torch.optim import Adam, SGD
 from torch.optim.lr_scheduler import CyclicLR, CosineAnnealingLR, StepLR, ReduceLROnPlateau
 import matplotlib.pyplot as plt
 
-from myKits import Accumulator, create_dir, create_dir1
+from utils.myKits import Accumulator, create_dir, create_dir1
 
 if __name__ == '__main__':
     ###############################################
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     epochs = 300
     batch_size = 4
     lr = 0.001
-    ce_weight = 0.5
+    ce_weight = 0.13
     ###############################################
     # validation dataset sample & train dataset sample
     ###############################################
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     ###############################################
     # 模型训练+验证
     ###############################################
-    val_loss_min = np.Inf
+    val_loss_min = np.inf
     acc = Accumulator(2)
 
     train_loss_history = []
@@ -77,13 +77,15 @@ if __name__ == '__main__':
         since = time.time()
         acc.reset()
         model.train()
-        for x, y, m_bg, m_ed in train_loader:
-            x, y, m_bg, m_ed = x.to(device), y.to(device), m_bg.to(device), m_ed.to(device)
+        #######################################
+        #训练
+        #######################################
+        for x, y in train_loader:
+            x, y = x.to(device), y.to(device)
             opt.zero_grad()
-            y_hat, z = model(x)
+            y_hat = model(x)
             ce_lossV, dice_lossV = loss(y_hat, y)
             lossT = dice_lossV*(1 - ce_weight)+ ce_lossV * ce_weight
-            #lossT += losses.boundary_loss(z, m_bg, m_ed) * 0.05
             lossT.backward()
             opt.step()
             acc.add(lossT.item() * x.shape[0], x.shape[0])
@@ -98,11 +100,13 @@ if __name__ == '__main__':
         train_loss_history.append(train_loss)
         acc.reset()
         model.eval()
-
+        ######################################################
+        #测试
+        ######################################################
         with torch.no_grad():
-            for x1, y1, m_bg, m_ed in valid_loader:
-                x1, y1, m_bg, m_ed = x1.to(device), y1.to(device), m_bg.to(device), m_ed.to(device)
-                y_hat1, _ = model(x1)
+            for x1, y1 in valid_loader:
+                x1, y1 = x1.to(device), y1.to(device)
+                y_hat1 = model(x1)
                 ce_lossV, dice_lossV = loss(y_hat1, y1)
                 lossV = dice_lossV
                 acc.add(lossV.item() * x1.shape[0], x1.shape[0])

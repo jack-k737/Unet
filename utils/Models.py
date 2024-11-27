@@ -3,6 +3,16 @@
 from __future__ import division, print_function
 import torch
 import torch.nn as nn
+import optuna
+
+def init_weights(model):
+        if isinstance(model, nn.Conv2d):
+            nn.init.xavier_uniform_(model.weight)
+            if model.bias is not None:
+                nn.init.constant_(model.bias, 0)
+        if isinstance(model, nn.BatchNorm2d):
+            nn.init.constant_(model.weight, 1)
+            nn.init.constant_(model.bias, 0)
 
 
 class ConvBlock(nn.Module):
@@ -11,7 +21,7 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dropout_p):
         super(ConvBlock, self).__init__()
         self.conv_conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=5 , padding=2),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3 , padding=1),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(),
             nn.Dropout(dropout_p),
@@ -19,6 +29,7 @@ class ConvBlock(nn.Module):
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU()
         )
+        self.conv_conv.apply(init_weights)
 
     def forward(self, x):
         return self.conv_conv(x)
@@ -126,7 +137,7 @@ class Decoder(nn.Module):
         x_3 = self.up3(x_2, x1)
         x_4 = self.up4(x_3, x0)
         output = self.out_conv(x_4)
-        return output, x_4
+        return output
 
 
 def Dropout(x, p=0.5):
@@ -139,7 +150,7 @@ class UNet(nn.Module):
         super(UNet, self).__init__()
 
         params = {'in_chns': in_chns,
-                  'feature_chns': [4, 8, 16, 32, 64],
+                  'feature_chns': [11, 22, 44, 88, 176],
                   'dropout': [0.05, 0.1, 0.2, 0.2, 0.5],#[0.05, 0.1, 0.2, 0.3 ,0.5]
                   'class_num': class_num,
                   'bilinear': False,
@@ -150,6 +161,6 @@ class UNet(nn.Module):
 
     def forward(self, x):
         feature = self.encoder(x)
-        output, x_4 = self.decoder(feature)
-        return output, x_4
+        output = self.decoder(feature)
+        return output
 
