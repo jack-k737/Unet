@@ -1,7 +1,11 @@
 import os,shutil
 import torch, torchvision
 import PIL.Image as Image
+from torchvision import transforms, models
+from torchvision.models import ResNet18_Weights
 
+from sklearn.manifold import TSNE
+from matplotlib import pyplot as plt
 
 class Accumulator:
     def __init__(self, n):
@@ -54,8 +58,30 @@ def label_save_gray(image, path):
     image_pil.save(path)
 
 
-def get_bg_features(labels):
-    pass
+preprocess = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.228, 0.225]),
+])
+
+def extract_image_features(image_path):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = models.resnet18(weights=ResNet18_Weights.DEFAULT).eval().to(device)
+    image = Image.open(image_path).convert('RGB')
+    image_tensor = preprocess(image).unsqueeze(0).to(device)
+    with torch.no_grad():
+        features = model(image_tensor)
+    return features.squeeze().cpu().numpy()
+
+
+def tsne_plot(data, labels_color):
+    tsne = TSNE(n_components=3, random_state=0)
+    data = tsne.fit_transform(data)
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(data[:, 0], data[:, 1], data[:, 2], color=labels_color)
+    plt.show()
 
 
 if __name__ == '__main__':
