@@ -1,11 +1,8 @@
 import os,shutil
-import torch, torchvision
+import torchvision
 import PIL.Image as Image
-from torchvision import transforms, models
-from torchvision.models import ResNet18_Weights
+import numpy as np
 
-from sklearn.manifold import TSNE
-from matplotlib import pyplot as plt
 
 class Accumulator:
     def __init__(self, n):
@@ -57,42 +54,50 @@ def label_save_gray(image, path):
     image_pil = torchvision.transforms.ToPILImage()(image)
     image_pil.save(path)
 
+def amp_spectrum_swap(amp_local, amp_target, L:float= 0.1, ratio:float=0.):
+    a_local = np.fft.fftshift(amp_local, axes=(-2, -1))
+    a_trg = np.fft.fftshift(amp_target, axes=(-2, -1))
 
-preprocess = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.228, 0.225]),
-])
+    _, h, w = a_local.shape
+    b = (np.floor(np.amin((h, w)) * L)).astype(int)
+    c_h = np.floor(h / 2.0).astype(int)
+    c_w = np.floor(w / 2.0).astype(int)
 
-def extract_image_features(image_path):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = models.resnet18(weights=ResNet18_Weights.DEFAULT).eval().to(device)
-    image = Image.open(image_path).convert('RGB')
-    image_tensor = preprocess(image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        features = model(image_tensor)
-    return features.squeeze().cpu().numpy()
+    h1 = c_h - b
+    h2 = c_h + b 
+    w1 = c_w - b
+    w2 = c_w + b
+
+    a_local[:, h1:h2, w1:w2] = a_local[:, h1:h2, w1:w2] * ratio + a_trg[:, h1:h2, w1:w2] * (1 - ratio)
+    a_local = np.fft.ifftshift(a_local, axes=(-2, -1))
 
 
-def tsne_plot(data, labels_color):
-    tsne = TSNE(n_components=3, random_state=0)
-    data = tsne.fit_transform(data)
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(data[:, 0], data[:, 1], data[:, 2], color=labels_color)
-    plt.show()
+    return a_local
+
+
+def freq_space_interpolation(local_img, target_img, L:float = 0.1, ratio:float =0):
+    local_img_np = local_img
+
+    # get fft of local sample
+    fft_local_np = np.fft.fft2(local_img_np, axes=(-2, -1))
+    # extract amplitude and phase of local sample
+    amp_local, pha_local = np.abs(fft_local_np), np.angle(fft_local_np)
+
+    fft_target_np = np.fft.fft2(target_img, axes=(-2, -1))
+    amp_target = np.abs(fft_target_np)
+
+    # swap the amplitude part of local image with target amplitude spectrum
+    amp_local_ = amp_spectrum_swap(amp_local, amp_target, L=L, ratio=ratio)
+
+    # get transformed image via inverse fft
+    fft_local_ = amp_local_ * np.exp(1j * pha_local)
+    local_in_trg = np.fft.ifft2(fft_local_, axes=(-2, -1))
+    local_in_trg = np.clip(np.real(local_in_trg),0,255)
+
+
+    return local_in_trg
 
 
 if __name__ == '__main__':
-    img = Image.open('ODOC/Domain1/train/imgs/gdrishtiGS_002.png')
-    img1 = label_pil2gray(img)
-    img2 = torchvision.transforms.ToTensor()(img)
-    print(img2.shape)
-    # img4 = img3.permute(2,0,1)
-    # print(img3.shape)
-    # acc = Accumulator(2)
-    # acc.add(1, 2)
-    # acc.add(3, 4)
-    # print(acc[0],acc[1])
+    pass
 

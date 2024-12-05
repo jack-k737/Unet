@@ -1,7 +1,7 @@
 from glob import glob
 import os
 
-image_dir_mode = os.path.join(os.getcwd(), 'ODOC','*','*','imgs','*.npy')
+image_dir_mode = os.path.join(os.getcwd(), 'ODOC','*','*','*','*.npy')
 image_dirs = glob(image_dir_mode)
 print(image_dirs)
 

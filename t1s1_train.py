@@ -22,7 +22,7 @@ if __name__ == '__main__':
     ###############################################
     # 训练数据集 + 验证数据集
     ###############################################
-    Train_data_folder = os.path.join(os.getcwd(), 'ODOC', 'Domain1', 'train', '')
+    Train_data_folder = os.path.join(os.getcwd(), 'ODOC', 'Domain1', 'train')
 
     Training_Data = Data_Loader.Images_Dataset_folder(Train_data_folder)
 
